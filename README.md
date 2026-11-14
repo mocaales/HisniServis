@@ -23,4 +23,5 @@ HišniServis je spletna aplikacija, ki povezuje stanovalce z izvajalci hišnih p
 - [Arhitektura in tehnološki sklad](docs/04-arhitektura-in-tehnoloski-sklad.md)
 - [Uporabniške zgodbe](docs/05-uporabniske-zgodbe.md)
 - [Wireframes](docs/06-wireframes.md)
+- [Pregled prevzetega projekta](docs/07-pregled-projekta.md)
 - [Arhitekturne odločitve (ADR)](docs/adr/)
