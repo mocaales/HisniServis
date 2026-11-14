@@ -1,15 +1,8 @@
-import express from "express";
+// dotenv/config se mora naložiti pred app.js, ki ob uvozu bere CORS_ORIGIN.
+import "dotenv/config";
 import mongoose from "mongoose";
-import cors from "cors";
-import dotenv from "dotenv";
-import authRoutes from "./routes/authRoutes.js";
-import roleRoutes from "./routes/roleRoutes.js";
-import popravilaRoutes from "./routes/popravila.js";
-import ponudbeRoutes from "./routes/ponudbe.js";
+import app from "./app.js";
 
-dotenv.config();
-
-const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Izbira podatkovne baze
@@ -19,25 +12,6 @@ const MONGO_URI =
   DB_MODE === "local"
     ? process.env.MONGO_URI_LOCAL
     : process.env.MONGO_URI_ATLAS;
-
-app.use(cors({ origin: "http://localhost:5173" }));
-app.use(express.json());
-
-app.use("/api/auth", authRoutes);
-app.use("/api/roles", roleRoutes);
-app.use("/api/popravila", popravilaRoutes);
-app.use("/api/ponudbe", ponudbeRoutes);
-
-app.get("/api/health", (req, res) => {
-  res.json({
-    message: "HišniServis API deluje!",
-    database:
-      mongoose.connection.readyState === 1
-        ? "Povezana"
-        : "Ni povezana",
-    databaseMode: DB_MODE
-  });
-});
 
 async function startServer() {
   try {
@@ -49,6 +23,10 @@ async function startServer() {
       throw new Error(
         `Povezava za MongoDB (${DB_MODE}) ni nastavljena v .env`
       );
+    }
+
+    if (!process.env.JWT_SECRET) {
+      throw new Error("JWT_SECRET ni nastavljen.");
     }
 
     await mongoose.connect(MONGO_URI);

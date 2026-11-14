@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "./PrejetePonudbe.css";
 
-const API_URL = "http://localhost:5000";
+import { API_URL } from "../config";
 
 function PrejetePonudbe({ uporabnik, token }) {
   const navigate = useNavigate();

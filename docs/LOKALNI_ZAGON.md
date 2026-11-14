@@ -60,14 +60,18 @@ V mapi `backend` ustvarite datoteko z imenom **`.env`** (ne `.env.txt`). Vanjo v
 PORT=5000
 JWT_SECRET=ZAMENJAJ_Z_DOLGIM_NAKLJUCNIM_SKRIVNIM_KLJUCEM
 DB_MODE=local
-MONGO_URI_LOCAL=mongodb://127.0.0.1:27017/hisniservis
+MONGO_URI_LOCAL=mongodb://127.0.0.1:27017/hisniservis?directConnection=true
+CORS_ORIGIN=http://localhost:5173
 ```
+
+Enake nastavitve so v datoteki `backend/.env.example`, ki jo lahko skopirate (`cp backend/.env.example backend/.env`).
 
 Pomen nastavitev:
 - `PORT`: vrata Express strežnika.
 - `JWT_SECRET`: skrivni ključ za podpisovanje JWT žetonov. **Vsak razvijalec naj uporabi svoj dolg, naključno ustvarjen ključ.**
 - `DB_MODE=local`: uporabi lokalno MongoDB.
-- `MONGO_URI_LOCAL`: povezava do lokalne baze `hisniservis`.
+- `MONGO_URI_LOCAL`: povezava do lokalne baze `hisniservis`. Parameter `directConnection=true` je potreben, ker lokalna MongoDB teče kot replica set z enim vozliščem.
+- `CORS_ORIGIN`: naslov frontenda, ki sme klicati API (več naslovov ločite z vejico).
 
 Če želite podpirati tudi MongoDB Atlas, dodatno nastavite:
 
@@ -101,6 +105,8 @@ Preverite, ali vsebnik deluje:
 ```bash
 docker ps
 ```
+
+MongoDB se zažene kot **replica set z enim vozliščem** (`rs0`), ker izbira ponudbe uporablja transakcije, ki na samostojni instanci niso podprte. Replica set se ob prvem zagonu samodejno inicializira v healthchecku; počakate lahko z `docker compose up -d --wait`.
 
 Pričakovano ime vsebnika je `hisniservis-mongodb` (če je tako določeno v `docker-compose.yml`), MongoDB pa posluša na `127.0.0.1:27017`.
 
@@ -161,7 +167,21 @@ Aplikacijo odprite v brskalniku:
 
 http://localhost:5173
 
-Frontend je v trenutni konfiguraciji povezan z backendom na `http://localhost:5000`.
+Frontend privzeto kliče backend na `http://localhost:5000`. Drug naslov nastavite s spremenljivko `VITE_API_URL` (glej `frontend/.env.example`), na primer `VITE_API_URL=http://localhost:5001 npm run dev`.
+
+> Na macOS so vrata 5000 lahko zasedena (AirPlay Receiver). V tem primeru v `backend/.env` nastavite npr. `PORT=5001` in frontend zaženite z `VITE_API_URL=http://localhost:5001`.
+
+## 6a. Lint in testi
+
+V mapah `backend` in `frontend`:
+
+```bash
+npm run lint            # ESLint
+npm test                # Vitest
+npm run test:coverage   # testi s poročilom o pokritosti (mapa coverage/)
+```
+
+Backend testi uporabljajo MongoDB v pomnilniku (`mongodb-memory-server`), zato Docker zanje ni potreben.
 
 ## 7. Preizkus delovanja
 
@@ -200,7 +220,8 @@ docker compose up -d
 | `MONGO_URI ... ni nastavljen` | Preverite `backend/.env`, pravilno ime spremenljivke in ponovni zagon backenda. |
 | `JWT_SECRET` ni nastavljen | Dodajte svoj `JWT_SECRET` v `backend/.env`. |
 | API ne deluje na vratih 5000 | Preverite, ali backend deluje in ali so vrata prosta. |
-| Frontend se ne poveže z API-jem | Preverite, ali backend posluša na vratih 5000 in frontend na 5173. |
+| Frontend se ne poveže z API-jem | Preverite, ali backend posluša na naslovu iz `VITE_API_URL` (privzeto vrata 5000) in ali `CORS_ORIGIN` vsebuje naslov frontenda. |
+| `Transaction numbers are only allowed on a replica set member` | MongoDB ni zagnana kot replica set: posodobite `docker-compose.yml`, zaženite `docker compose up -d --wait` in v URI dodajte `?directConnection=true`. |
 | V Compassu ni baze `hisniservis` | Najprej ustvarite uporabnika ali drug dokument, nato osvežite pogled. |
 
 ---

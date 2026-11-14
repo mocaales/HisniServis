@@ -19,7 +19,7 @@ const upload = multer({
     const dovoljeniTipi = [
       "image/jpeg",
       "image/png",
-      "iage/webp",
+      "image/webp",
     ];
 
     if (!dovoljeniTipi.includes(file.mimetype)) {
@@ -67,7 +67,10 @@ router.post(
         naslov: naslov.trim(),
         kategorija: kategorija.trim(),
         opis: opis.trim(),
-        lokacija: lokacija.trim(),
+        lokacija:
+          typeof lokacija === "string" && lokacija.trim()
+            ? lokacija.trim()
+            : null,
 
       });
 

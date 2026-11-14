@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "./PregledPopravil.css";
 
-const API_URL = "http://localhost:5000";
+import { API_URL } from "../config";
 const NA_STRAN = 5;
 
 const kategorije = [
