@@ -1,9 +1,9 @@
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "./PrejetePonudbe.css";
 
-const API_URL = "http://localhost:5000";
+import { API_URL } from "../config";
 
 function PotrjenePonudbe({ uporabnik, token }) {
   const navigate = useNavigate();
@@ -17,7 +17,7 @@ function PotrjenePonudbe({ uporabnik, token }) {
   const [spreminjanje, setSpreminjanje] = useState(null);
 
   // PRIDOBIVANJE POTRJENIH PONUDB
-  const pridobiPonudbe = async (signal) => {
+  const pridobiPonudbe = useCallback(async (signal) => {
     const response = await fetch(
       `${API_URL}/api/ponudbe/potrjene`,
       {
@@ -38,7 +38,7 @@ function PotrjenePonudbe({ uporabnik, token }) {
     }
 
     return data.ponudbe || [];
-  };
+  }, [token]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -75,7 +75,7 @@ function PotrjenePonudbe({ uporabnik, token }) {
     nalozi();
 
     return () => controller.abort();
-  }, [token]);
+  }, [token, pridobiPonudbe]);
 
   // SPREMEMBA STATUSA POPRAVILA
   const spremeniStatus = async (ponudba, noviStatus) => {

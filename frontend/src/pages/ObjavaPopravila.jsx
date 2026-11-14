@@ -1,9 +1,9 @@
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import "./ObjavaPopravila.css";
 
-const API_URL = "http://localhost:5000";
+import { API_URL } from "../config";
 
 const mesta = [
   "Ljubljana",
@@ -29,7 +29,6 @@ function ObjavaPopravila({ token }) {
   const [lokacija, setLokacija] = useState("");
   const [opis, setOpis] = useState("");
   const [fotografija, setFotografija] = useState(null);
-  const [predogled, setPredogled] = useState(null);
 
   const [nalaganje, setNalaganje] = useState(false);
   const [sporocilo, setSporocilo] = useState("");
@@ -37,17 +36,16 @@ function ObjavaPopravila({ token }) {
 
   const fileInputRef = useRef(null);
 
+  const predogled = useMemo(
+    () => (fotografija ? URL.createObjectURL(fotografija) : null),
+    [fotografija]
+  );
+
   useEffect(() => {
-    if (!fotografija) {
-      setPredogled(null);
-      return;
-    }
+    if (!predogled) return;
 
-    const url = URL.createObjectURL(fotografija);
-    setPredogled(url);
-
-    return () => URL.revokeObjectURL(url);
-  }, [fotografija]);
+    return () => URL.revokeObjectURL(predogled);
+  }, [predogled]);
 
   const izberiFotografijo = (e) => {
     const datoteka = e.target.files?.[0];

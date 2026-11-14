@@ -15,7 +15,7 @@ import PodrobnostiPopravila from "./pages/PodrobnostiPopravila";
 import PrejetePonudbe from "./pages/PrejetePonudbe";
 import PotrjenePonudbe from "./pages/PotrjenePonudbe";
 
-const API_URL = "http://localhost:5000";
+import { API_URL } from "./config";
 
 const poti = {
   Stanovalec: "/stanovalec",
@@ -43,40 +43,6 @@ function PreveriPrijavo({
   }
 
   return children;
-}
-
-
-function ZacetnaStran({ uporabnik, onLogout }) {
-  const navigate = useNavigate();
-
-  return (
-    <div className="register-page">
-      <div className="register-card">
-        <h1>HišniServis</h1>
-        <h2>Dobrodošli, {uporabnik.ime}!</h2>
-
-        <p>
-          Prijavljeni ste kot {uporabnik.vloga}.
-        </p>
-
-        {uporabnik.vloga === "Stanovalec" && (
-          <button
-            onClick={() => navigate("/stanovalec/objavi")}
-          >
-            Objavi novo popravilo
-          </button>
-        )}
-
-        <button onClick={onLogout}>
-          Odjava
-        </button>
-
-        <button onClick={() => navigate("/popravila")}>
-          Pregled popravil
-        </button>
-      </div>
-    </div>
-  );
 }
 
 
