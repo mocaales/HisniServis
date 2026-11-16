@@ -1,0 +1,263 @@
+name: CI/CD
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# Novejši zagon na istem PR prekine starejšega; zagonov na main (deploy) ne prekinjamo.
+concurrency:
+  group: ci-cd-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  NODE_VERSION: "24"
+
+jobs:
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: |
+            frontend/package-lock.json
+            backend/package-lock.json
+
+      - name: Namestitev odvisnosti
+        run: |
+          npm ci --prefix frontend
+          npm ci --prefix backend
+
+      - name: ESLint – frontend
+        run: npm run lint --prefix frontend
+
+      - name: ESLint – backend
+        run: npm run lint --prefix backend
+
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: |
+            frontend/package-lock.json
+            backend/package-lock.json
+
+      - name: Opozorilo, če URL backenda ni nastavljen
+        if: vars.VITE_API_URL == ''
+        run: echo "::warning::Spremenljivka VITE_API_URL ni nastavljena, frontend bo klical http://localhost:5000."
+
+      - name: Gradnja frontenda
+        working-directory: frontend
+        env:
+          VITE_API_URL: ${{ vars.VITE_API_URL }}
+        run: |
+          npm ci
+          npm run build
+
+      - name: Paket backenda (samo produkcijske odvisnosti)
+        working-directory: backend
+        run: |
+          npm ci --omit=dev
+          mkdir -p ../dist-backend
+          cp -r app.js server.js package.json package-lock.json routes models middleware node_modules ../dist-backend/
+          tar -czf ../backend.tar.gz -C ../dist-backend .
+
+      - name: Artefakt – frontend
+        uses: actions/upload-artifact@v7
+        with:
+          name: frontend-dist
+          path: frontend/dist
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Artefakt – backend
+        uses: actions/upload-artifact@v7
+        with:
+          name: backend-dist
+          path: backend.tar.gz
+          if-no-files-found: error
+          retention-days: 7
+
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: |
+            frontend/package-lock.json
+            backend/package-lock.json
+
+      # Binarka MongoDB za mongodb-memory-server (~100 MB) se prenese samo ob prvem zagonu.
+      - name: Predpomnilnik binarke MongoDB
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/mongodb-binaries
+          key: mongodb-binaries-${{ runner.os }}-${{ hashFiles('backend/package-lock.json') }}
+
+      - name: Namestitev odvisnosti
+        run: |
+          npm ci --prefix frontend
+          npm ci --prefix backend
+
+      - name: Testi – frontend
+        run: npm run test:coverage --prefix frontend
+
+      - name: Testi – backend
+        run: npm run test:coverage --prefix backend
+
+      - name: Povzetek pokritosti
+        if: always()
+        run: |
+          # shellcheck disable=SC2016 # JavaScript v enojnih narekovajih je namerno.
+          for del in frontend backend; do
+            f="$del/coverage/coverage-summary.json"
+            [ -f "$f" ] && node -e '
+              const t = require("./" + process.argv[1]).total;
+              console.log(`| ${process.argv[2]} | ${t.lines.pct} % | ${t.statements.pct} % | ${t.functions.pct} % | ${t.branches.pct} % |`);
+            ' "$f" "$del"
+          done > coverage-rows.md
+          {
+            echo "### Pokritost kode"
+            echo "| Del | Vrstice | Stavki | Funkcije | Veje |"
+            echo "|---|---|---|---|---|"
+            cat coverage-rows.md
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Artefakt – poročilo o pokritosti
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-report
+          path: |
+            frontend/coverage
+            backend/coverage
+          if-no-files-found: warn
+          retention-days: 14
+
+  deploy:
+    name: deploy
+    needs: [lint, build, test]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: ${{ vars.FRONTEND_URL }}
+    permissions:
+      contents: read
+      packages: write
+    env:
+      REGISTRY: ghcr.io
+    steps:
+      # Checkout samo za Dockerfile in nginx predlogo v mapi deploy/; aplikacije ne gradimo.
+      - uses: actions/checkout@v7
+        with:
+          sparse-checkout: deploy
+
+      - name: Prenos artefakta frontenda
+        uses: actions/download-artifact@v8
+        with:
+          name: frontend-dist
+          path: deploy/frontend/dist
+
+      - name: Prenos artefakta backenda
+        uses: actions/download-artifact@v8
+        with:
+          name: backend-dist
+          path: deploy/backend
+
+      - name: Razpakiranje backenda
+        working-directory: deploy/backend
+        run: |
+          mkdir app
+          tar -xzf backend.tar.gz -C app
+          rm backend.tar.gz
+
+      - name: Imena slik
+        id: slike
+        run: |
+          owner="${GITHUB_REPOSITORY_OWNER,,}"
+          echo "backend=${REGISTRY}/${owner}/hisniservis-backend" >> "$GITHUB_OUTPUT"
+          echo "frontend=${REGISTRY}/${owner}/hisniservis-frontend" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/setup-buildx-action@v4
+
+      # Sliki samo zapakirata artefakta iz joba build (COPY), brez npm install ali vite build.
+      - name: Slika backenda
+        uses: docker/build-push-action@v7
+        with:
+          context: deploy/backend
+          push: true
+          tags: |
+            ${{ steps.slike.outputs.backend }}:${{ github.sha }}
+            ${{ steps.slike.outputs.backend }}:latest
+
+      - name: Slika frontenda
+        uses: docker/build-push-action@v7
+        with:
+          context: deploy/frontend
+          push: true
+          tags: |
+            ${{ steps.slike.outputs.frontend }}:${{ github.sha }}
+            ${{ steps.slike.outputs.frontend }}:latest
+
+      - name: Namestitev na Render
+        env:
+          HOOK_BACKEND: ${{ secrets.RENDER_DEPLOY_HOOK_BACKEND }}
+          HOOK_FRONTEND: ${{ secrets.RENDER_DEPLOY_HOOK_FRONTEND }}
+          IMG_BACKEND: ${{ steps.slike.outputs.backend }}:${{ github.sha }}
+          IMG_FRONTEND: ${{ steps.slike.outputs.frontend }}:${{ github.sha }}
+        run: |
+          if [ -z "$HOOK_BACKEND" ] || [ -z "$HOOK_FRONTEND" ]; then
+            echo "::warning::Deploy hooka za Render nista nastavljena v okolju production. Sliki sta objavljeni, namestitev je preskočena."
+            exit 0
+          fi
+          sprozi() {
+            img=$(node -p 'encodeURIComponent(process.argv[1])' "$2")
+            code=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$1&imgURL=$img")
+            echo "Render ($3): HTTP $code"
+            [ "$code" -ge 200 ] && [ "$code" -lt 300 ]
+          }
+          sprozi "$HOOK_BACKEND" "$IMG_BACKEND" backend
+          sprozi "$HOOK_FRONTEND" "$IMG_FRONTEND" frontend
+
+      - name: Preverjanje dostopnosti
+        if: vars.VITE_API_URL != '' && vars.FRONTEND_URL != ''
+        env:
+          BACKEND_URL: ${{ vars.VITE_API_URL }}
+          FRONTEND_URL: ${{ vars.FRONTEND_URL }}
+        run: |
+          # Render potrebuje nekaj minut za zamenjavo slike (in prebujanje brezplačne storitve).
+          for url in "$BACKEND_URL/api/health" "$FRONTEND_URL"; do
+            for _ in $(seq 1 30); do
+              if curl -fsS -o /dev/null "$url"; then echo "OK: $url"; continue 2; fi
+              sleep 20
+            done
+            echo "::error::$url ni dostopen."; exit 1
+          done
+          curl -fsS "$BACKEND_URL/api/health"
