@@ -2,7 +2,7 @@
 
 [![CI/CD](https://github.com/mocaales/HisniServis/actions/workflows/ci-cd.yml/badge.svg?branch=main)](https://github.com/mocaales/HisniServis/actions/workflows/ci-cd.yml)
 
-**Nameščena aplikacija:** [FRONTEND_URL](FRONTEND_URL) · API: [BACKEND_URL/api/health](BACKEND_URL/api/health)
+**Nameščena aplikacija:** [hisniservis-frontend.onrender.com](https://hisniservis-frontend.onrender.com) · API: [hisniservis-backend.onrender.com/api/health](https://hisniservis-backend.onrender.com/api/health)
 
 ## Opis projekta
 
