@@ -12,8 +12,6 @@ const dovoljeniIzvori = (process.env.CORS_ORIGIN || "http://localhost:5173")
   .map((izvor) => izvor.trim())
   .filter(Boolean);
 
-const neuporabljena = "namerna napaka linterja";
-
 const app = express();
 
 app.use(cors({ origin: dovoljeniIzvori }));
