@@ -308,6 +308,64 @@ router.delete("/:id", preveriJWT, async (req, res) => {
 
 
 
+// Zgodovina popravil (US-10). Mora biti pred GET /:id, sicer Express
+// "moja" obravnava kot ID popravila.
+router.get(
+  "/moja",
+  preveriJWT,
+  preveriVlogo("Stanovalec", "Izvajalec"),
+  async (req, res) => {
+    try {
+      const { id: uporabnikId, vloga } = req.uporabnik;
+
+      // Stanovalec: popravila, ki jih je objavil.
+      // Izvajalec: popravila, za katera je bila izbrana njegova ponudba.
+      const pogoj =
+        vloga === "Stanovalec"
+          ? { stanovalec: uporabnikId }
+          : {
+            _id: {
+              $in: await Ponudba.distinct("popravilo", {
+                izvajalec: uporabnikId,
+                status: "SPREJETA",
+              }),
+            },
+          };
+
+      const popravila = await Popravilo.find(pogoj)
+        .select(
+          "naslov kategorija lokacija status datum_objave fotografija.contentType"
+        )
+        .sort({ datum_objave: -1 })
+        .lean();
+
+      const seznam = popravila.map((popravilo) => ({
+        id: popravilo._id.toString(),
+        naslov: popravilo.naslov,
+        kategorija: popravilo.kategorija,
+        lokacija: popravilo.lokacija || null,
+        status: popravilo.status,
+        datum_objave: popravilo.datum_objave,
+        fotografijaDodana: Boolean(
+          popravilo.fotografija?.contentType
+        ),
+      }));
+
+      return res.status(200).json({
+        message: "Zgodovina popravil uspešno pridobljena.",
+        stevilo: seznam.length,
+        popravila: seznam,
+      });
+    } catch (error) {
+      console.error(error);
+
+      return res.status(500).json({
+        message: "Napaka pri pridobivanju zgodovine popravil.",
+      });
+    }
+  }
+);
+
 router.get("/:id", preveriJWT, async (req, res) => {
   try {
     if (!mongoose.isValidObjectId(req.params.id)) {

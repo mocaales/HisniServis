@@ -31,16 +31,14 @@ Poleg MVP so implementirani še registracija in prijava (JWT, bcrypt), zaščita
 
 Pregledanih je bilo pet uporabniških zgodb, ki pokrivajo jedro poslovnega procesa MVP: od objave popravila do izbire ponudbe (US-02 do US-06). Vsak kriterij sprejemljivosti je bil preverjen v kodi in z lokalnim klicem API-ja oziroma v uporabniškem vmesniku.
 
-Legenda: ✅ izpolnjeno · ⚠️ delno izpolnjeno · ❌ ni izpolnjeno
-
 ### US-02: Objava hišnega popravila
 
 | Kriterij | Ocena | Utemeljitev |
 |---|---|---|
-| 1. Vnos naslova, kategorije in opisa | ✅ | Obrazec ima naslov, kategorijo (izbirni seznam), lokacijo in opis. |
-| 2. Zahtevani obvezni podatki pred objavo | ✅ | Frontend preveri polja, backend vrne 400 `Naslov, kategorija in opis so obvezni.` Brez lokacije backend vrne 500 namesto 400 (glej ugotovitve). |
-| 3. Objava fotografije | ⚠️ | JPEG in PNG delujeta (do 2 MB, shranjeno v MongoDB). WebP je zaradi napake zavrnjen. |
-| 4. Shranjeno in prikazano med odprtimi | ✅ | Novo popravilo ima status `ODPRTO` in se takoj pojavi v `GET /api/popravila`. |
+| 1. Vnos naslova, kategorije in opisa | izpolnjeno | Obrazec ima naslov, kategorijo (izbirni seznam), lokacijo in opis. |
+| 2. Zahtevani obvezni podatki pred objavo | izpolnjeno | Frontend preveri polja, backend vrne 400 `Naslov, kategorija in opis so obvezni.` Brez lokacije backend vrne 500 namesto 400 (glej ugotovitve). |
+| 3. Objava fotografije | delno izpolnjeno | JPEG in PNG delujeta (do 2 MB, shranjeno v MongoDB). WebP je zaradi napake zavrnjen. |
+| 4. Shranjeno in prikazano med odprtimi | izpolnjeno | Novo popravilo ima status `ODPRTO` in se takoj pojavi v `GET /api/popravila`. |
 
 **Sklep:** zgodba je izpolnjena z manjšima napakama (WebP, manjkajoča lokacija v API-ju).
 
@@ -48,10 +46,10 @@ Legenda: ✅ izpolnjeno · ⚠️ delno izpolnjeno · ❌ ni izpolnjeno
 
 | Kriterij | Ocena | Utemeljitev |
 |---|---|---|
-| 1. Seznam objavljenih popravil, na voljo za ponudbe | ✅ | `GET /api/popravila` vrne samo popravila s statusom `ODPRTO`, razvrščena od najnovejšega. |
-| 2. Filtriranje po kategoriji in lokaciji | ✅ | Filtra in prosto iskanje sta izvedena na frontendu nad prejetim seznamom. |
-| 3. Prikaz naslova, kategorije, opisa in lokacije | ✅ | Kartica popravila prikazuje vse štiri podatke. |
-| 4. Obvestilo, ko ni rezultatov | ✅ | Prikaže se `Ni popravil, ki ustrezajo iskanju.` |
+| 1. Seznam objavljenih popravil, na voljo za ponudbe | izpolnjeno | `GET /api/popravila` vrne samo popravila s statusom `ODPRTO`, razvrščena od najnovejšega. |
+| 2. Filtriranje po kategoriji in lokaciji | izpolnjeno | Filtra in prosto iskanje sta izvedena na frontendu nad prejetim seznamom. |
+| 3. Prikaz naslova, kategorije, opisa in lokacije | izpolnjeno | Kartica popravila prikazuje vse štiri podatke. |
+| 4. Obvestilo, ko ni rezultatov | izpolnjeno | Prikaže se `Ni popravil, ki ustrezajo iskanju.` |
 
 **Sklep:** zgodba je izpolnjena. Filtriranje poteka na odjemalcu, kar pri večjem številu popravil ne bo skaliralo (ni filtrov v API-ju, ni strežniškega ostranjevanja).
 
@@ -59,10 +57,10 @@ Legenda: ✅ izpolnjeno · ⚠️ delno izpolnjeno · ❌ ni izpolnjeno
 
 | Kriterij | Ocena | Utemeljitev |
 |---|---|---|
-| 1. Vnos cene, opisa in predvidenega časa za odprto popravilo | ✅ | Za neodprta popravila backend vrne 400. |
-| 2. Zavrnitev brez obveznih podatkov ali z negativno ceno | ✅ | Preverjeno: negativna cena → 400, manjkajoč opis → 400. |
-| 3. Ponudba povezana s popravilom in izvajalcem | ✅ | Ponudba hrani `popravilo` in `izvajalec` (iz JWT). |
-| 4. Samo ena ponudba na izvajalca | ✅ | Preverjanje v kodi in unikatni indeks `{popravilo, izvajalec}`; druga oddaja vrne 409. |
+| 1. Vnos cene, opisa in predvidenega časa za odprto popravilo | izpolnjeno | Za neodprta popravila backend vrne 400. |
+| 2. Zavrnitev brez obveznih podatkov ali z negativno ceno | izpolnjeno | Preverjeno: negativna cena → 400, manjkajoč opis → 400. |
+| 3. Ponudba povezana s popravilom in izvajalcem | izpolnjeno | Ponudba hrani `popravilo` in `izvajalec` (iz JWT). |
+| 4. Samo ena ponudba na izvajalca | izpolnjeno | Preverjanje v kodi in unikatni indeks `{popravilo, izvajalec}`; druga oddaja vrne 409. |
 
 **Sklep:** zgodba je v celoti izpolnjena.
 
@@ -70,10 +68,10 @@ Legenda: ✅ izpolnjeno · ⚠️ delno izpolnjeno · ❌ ni izpolnjeno
 
 | Kriterij | Ocena | Utemeljitev |
 |---|---|---|
-| 1. Stanovalec vidi vse ponudbe za svoje popravilo | ✅ | `GET /api/ponudbe/prejete` in `/popravilo/:id`. |
-| 2. Cena, čas, opis in podatki o izvajalcu | ⚠️ | Prikazani so cena, čas, opis ter ime in priimek izvajalca. Specializacija in opis izvajalca, ki ju izvajalec vnese ob registraciji, se ne prikažeta. |
-| 3. Primerjava na enem mestu | ✅ | Ponudbe so na eni strani, s filtrom po popravilu in razvrščanjem po ceni ali času izvedbe. |
-| 4. Ni vpogleda v ponudbe drugih stanovalcev | ✅ | Preverjeno: drug stanovalec dobi 403. |
+| 1. Stanovalec vidi vse ponudbe za svoje popravilo | izpolnjeno | `GET /api/ponudbe/prejete` in `/popravilo/:id`. |
+| 2. Cena, čas, opis in podatki o izvajalcu | delno izpolnjeno | Prikazani so cena, čas, opis ter ime in priimek izvajalca. Specializacija in opis izvajalca, ki ju izvajalec vnese ob registraciji, se ne prikažeta. |
+| 3. Primerjava na enem mestu | izpolnjeno | Ponudbe so na eni strani, s filtrom po popravilu in razvrščanjem po ceni ali času izvedbe. |
+| 4. Ni vpogleda v ponudbe drugih stanovalcev | izpolnjeno | Preverjeno: drug stanovalec dobi 403. |
 
 **Sklep:** zgodba je večinoma izpolnjena. Podatki o izvajalcu so skromni.
 
@@ -81,10 +79,10 @@ Legenda: ✅ izpolnjeno · ⚠️ delno izpolnjeno · ❌ ni izpolnjeno
 
 | Kriterij | Ocena | Utemeljitev |
 |---|---|---|
-| 1. Izbira samo ponudbe za svoje popravilo | ✅ | Drug stanovalec dobi 403. |
-| 2. Največ ena izbrana ponudba | ✅ | Izbira v transakciji preveri status popravila `ODPRTO` in ga spremeni v `V_TEKU`. |
-| 3. Izbrana `SPREJETA`, ostale zavrnjene | ✅ | Preverjeno: izbrana ponudba `SPREJETA`, druga `ZAVRNJENA`. |
-| 4. Preprečena druga izbira brez preklica | ✅ | Druga izbira vrne 409. Postopek preklica ni implementiran, zato izbire ni mogoče spremeniti. |
+| 1. Izbira samo ponudbe za svoje popravilo | izpolnjeno | Drug stanovalec dobi 403. |
+| 2. Največ ena izbrana ponudba | izpolnjeno | Izbira v transakciji preveri status popravila `ODPRTO` in ga spremeni v `V_TEKU`. |
+| 3. Izbrana `SPREJETA`, ostale zavrnjene | izpolnjeno | Preverjeno: izbrana ponudba `SPREJETA`, druga `ZAVRNJENA`. |
+| 4. Preprečena druga izbira brez preklica | izpolnjeno | Druga izbira vrne 409. Postopek preklica ni implementiran, zato izbire ni mogoče spremeniti. |
 
 **Sklep:** logika zgodbe je izpolnjena, vendar deluje samo na MongoDB z replica setom (npr. Atlas). Z lokalno bazo iz `docker-compose.yml` izbira vrne 500.
 

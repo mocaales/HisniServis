@@ -1,5 +1,6 @@
 import request from "supertest";
 import app from "../app.js";
+import Uporabnik from "../models/Uporabnik.js";
 
 let stevec = 0;
 
@@ -28,6 +29,14 @@ export async function ustvariUporabnika(vloga = "Stanovalec") {
     .expect(200);
 
   return { ...prijava.body.uporabnik, token: prijava.body.token };
+}
+
+// Registracija vloge Administrator prek API-ja ni dovoljena, zato vlogo
+// nastavimo neposredno v bazi. preveriJWT vlogo bere iz baze, žeton ostane veljaven.
+export async function ustvariAdministratorja() {
+  const uporabnik = await ustvariUporabnika();
+  await Uporabnik.updateOne({ _id: uporabnik.id }, { vloga: "Administrator" });
+  return { ...uporabnik, vloga: "Administrator" };
 }
 
 export function objaviPopravilo(token, polja = {}) {

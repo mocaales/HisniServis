@@ -511,6 +511,16 @@ function PregledPopravil({ uporabnik, token, onLogout}) {
             </Link>
           )}
 
+          {(vloga === "Stanovalec" || vloga === "Izvajalec") && (
+            <Link
+              to="/zgodovina"
+              className="pp-menu-item"
+            >
+              <span>◷</span>
+              Zgodovina popravil
+            </Link>
+          )}
+
           {vloga === "Gost" && (
             <p className="pp-sidebar-note">
               Za oddajo ponudb se morate prijaviti.
