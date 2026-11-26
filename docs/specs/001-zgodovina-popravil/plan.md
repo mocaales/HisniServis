@@ -59,3 +59,5 @@ Filter statusa je lokalno stanje (`useState`) nad prejetim seznamom.
 - **Brez sprememb CI** (`.github/workflows/`): novi testi se samodejno vključijo v obstoječa `npm run test:coverage`.
 
 ## Pregled načrta
+
+Načrt je pregledal razvijalec (26. 11. 2026) in ga potrdil brez sprememb.
