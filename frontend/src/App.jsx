@@ -14,6 +14,7 @@ import PregledPopravil from "./pages/PregledPopravil";
 import PodrobnostiPopravila from "./pages/PodrobnostiPopravila";
 import PrejetePonudbe from "./pages/PrejetePonudbe";
 import PotrjenePonudbe from "./pages/PotrjenePonudbe";
+import ZgodovinaPopravil from "./pages/ZgodovinaPopravil";
 
 import { API_URL } from "./config";
 
@@ -277,6 +278,22 @@ function App() {
 
             
 
+
+      <Route
+        path="/zgodovina"
+        element={
+          ["Stanovalec", "Izvajalec"].includes(
+            prijava.uporabnik?.vloga
+          ) && prijava.token ? (
+            <ZgodovinaPopravil
+              uporabnik={prijava.uporabnik}
+              token={prijava.token}
+            />
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
 
       <Route
         path="*"

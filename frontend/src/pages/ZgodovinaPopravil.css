@@ -1,0 +1,81 @@
+/* Zgodovina popravil (US-10). Postavitev strani je v PregledPopravil.css. */
+
+.zg-status-field {
+  max-width: 260px;
+}
+
+.zg-tabela {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border: 1px solid var(--pp-border, #e3eaee);
+  border-radius: 11px;
+  overflow: hidden;
+  font-size: 13px;
+}
+
+.zg-tabela th,
+.zg-tabela td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid #edf2f4;
+  vertical-align: middle;
+}
+
+.zg-tabela th {
+  background: #f6f9fa;
+  font-size: 11px;
+  font-weight: 600;
+  color: #60747e;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.zg-tabela tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.zg-tabela td small {
+  display: block;
+  margin-top: 3px;
+  color: #7b8d95;
+}
+
+.zg-tabela a {
+  color: var(--pp-primary, #0f766e);
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.zg-status {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  background: #eef2f4;
+  color: #44565e;
+  white-space: nowrap;
+}
+
+.zg-status-odprto { background: #e6f0fb; color: #1f5f9e; }
+.zg-status-v_teku { background: #fdf3e1; color: #8a5a10; }
+.zg-status-v_delu { background: #fdf3e1; color: #8a5a10; }
+.zg-status-caka_potrditev { background: #f3ebfb; color: #6a3a9e; }
+.zg-status-zakljuceno { background: #e4f5ec; color: #1d7149; }
+
+.zg-skrito {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+@media (max-width: 700px) {
+  .zg-tabela th:nth-child(2),
+  .zg-tabela td:nth-child(2) {
+    display: none;
+  }
+}
